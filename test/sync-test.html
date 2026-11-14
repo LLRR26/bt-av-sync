@@ -1,0 +1,61 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>AV sync self-check</title>
+<!-- Loads content.js with a fake chrome.storage, plays a color-coded test video,
+     and measures how far the overlay lags the live video. Expect ≈ the delay. -->
+<button id="go">Start</button> <span id="out">click Start</span>
+<div style="position:relative;width:480px;height:270px;margin-top:8px">
+  <video id="v" style="position:absolute;left:0;top:0;width:100%;height:100%" playsinline></video>
+</div>
+<script>
+const listeners = [], store = { delayMs: 200, enabled: true };
+window.chrome = { runtime: { id: 'test', onMessage: { addListener() {} }, sendMessage: () => Promise.resolve() }, storage: {
+  local: {
+    get: (d, cb) => cb({ ...d, ...store }),
+    set: o => { const c = {}; for (const k in o) c[k] = { newValue: (store[k] = o[k]) }; listeners.forEach(f => f(c)); },
+  },
+  onChanged: { addListener: f => listeners.push(f) },
+} };
+
+// Source: frame n painted as color (n%32, n/32%32) * 8; remember when each n was painted.
+const src = Object.assign(document.createElement('canvas'), { width: 64, height: 36 });
+const sctx = src.getContext('2d'), painted = new Map();
+let n = 0;
+(function paint(t) {
+  n = (n + 1) % 1024;
+  sctx.fillStyle = `rgb(${(n % 32) * 8},${(n >> 5) * 8},0)`;
+  sctx.fillRect(0, 0, 64, 36);
+  painted.set(n, performance.now());
+  requestAnimationFrame(paint);
+})();
+
+const v = document.getElementById('v');
+v.srcObject = src.captureStream(60);
+
+const probe = new OffscreenCanvas(1, 1).getContext('2d', { willReadFrequently: true });
+function frameIn(el) {
+  probe.drawImage(el, 0, 0, 1, 1);
+  const [r, g] = probe.getImageData(0, 0, 1, 1).data;
+  return Math.round(r / 8) + Math.round(g / 8) * 32;
+}
+const median = a => a.slice().sort((x, y) => x - y)[a.length >> 1];
+
+document.getElementById('go').onclick = async () => {
+  await v.play();
+  const s = document.createElement('script');
+  s.src = '../content.js';
+  document.body.append(s);
+  await new Promise(r => setTimeout(r, 1500)); // let the delay queue fill
+
+  const view = v.nextElementSibling;
+  const lag = [];
+  for (let i = 0; i < 60; i++) {
+    await new Promise(r => requestAnimationFrame(r));
+    const live = painted.get(frameIn(v)), late = painted.get(frameIn(view));
+    if (live && late) lag.push(live - late);
+  }
+  const ok = view.tagName === 'CANVAS' && view.style.display === 'block' && Math.abs(median(lag) - store.delayMs) <= 35;
+  document.getElementById('out').textContent =
+    `${ok ? 'PASS' : 'FAIL'}: overlay lags live video by ${Math.round(median(lag))} ms (target ${store.delayMs} ms, ${lag.length} samples)`;
+};
+</script>

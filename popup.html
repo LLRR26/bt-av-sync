@@ -1,0 +1,25 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  :root { color-scheme: light dark; }
+  body { width: 260px; margin: 0; padding: 14px; font: 13px/1.4 system-ui, sans-serif; }
+  h1 { font-size: 14px; margin: 0 0 10px; display: flex; justify-content: space-between; align-items: center; }
+  .speaker { opacity: .8; margin-bottom: 12px; overflow-wrap: anywhere; }
+  .row { display: flex; gap: 6px; align-items: center; }
+  input[type=range] { width: 100%; margin: 8px 0; }
+  input[type=number] { width: 64px; }
+  button { min-width: 40px; }
+  .hint { opacity: .6; font-size: 11px; margin-top: 10px; }
+  a { color: inherit; }
+</style>
+<h1>BT AV Sync <label><input type="checkbox" id="enabled"> On</label></h1>
+<div class="speaker" id="speaker"></div>
+<div class="row">
+  <button id="minus">−10</button>
+  <input type="number" id="ms" min="0" max="1500" step="10" aria-label="Delay in ms"> ms
+  <button id="plus">+10</button>
+</div>
+<input type="range" id="range" min="0" max="1500" step="10" aria-label="Delay">
+<button id="calibrate" style="width:100%">Calibrate…</button>
+<div class="hint">Alt+[ / Alt+] nudge · Alt+\ on/off · Alt+S re-measure · Alt+T two-tab · Alt+R readout</div>
+<script src="popup.js"></script>

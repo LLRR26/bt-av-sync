@@ -1,0 +1,53 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>BT AV Sync setup</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { max-width: 600px; margin: 32px auto; padding: 0 16px; font: 15px/1.5 system-ui, sans-serif; }
+  section { border-top: 1px solid #8884; padding: 8px 0 16px; }
+  h2 { font-size: 17px; margin: 8px 0 4px; }
+  button { font: inherit; padding: 6px 14px; }
+  .result { margin-top: 10px; font-weight: 600; min-height: 1.5em; }
+  .now { padding: 10px 12px; border-radius: 6px; background: #8882; }
+  #pad { display: none; margin-top: 10px; height: 120px; border-radius: 8px; background: #8883;
+         align-items: center; justify-content: center; user-select: none; touch-action: none; font-size: 18px; }
+  #pad.beat { background: #8886; }
+  input[type=number] { width: 70px; font: inherit; }
+</style>
+<h1>BT AV Sync setup</h1>
+<div class="now" id="now"></div>
+
+<section>
+  <h2>1. Microphone access</h2>
+  <p>Chrome only shows speaker names to extensions that have mic access. With it, the extension saves a
+  delay for each speaker and can measure the delay itself. Nothing is recorded or sent anywhere.</p>
+  <button id="grant">Allow microphone</button>
+  <div class="result" id="grantOut"></div>
+</section>
+
+<section>
+  <h2>2. Tap test</h2>
+  <p>You'll hear 12 beeps, one per second. Tap <b>Space</b> (or click the box) <b>along with the
+  rhythm</b> so your taps land on the beeps, the way you'd clap along to music. Don't wait for each
+  beep and then react. Results are accurate to about ±30 ms.</p>
+  <button id="tapStart">Start tap test</button>
+  <div id="pad">tap here or press Space</div>
+  <div class="result" id="tapOut"></div>
+  <button id="tapUse" hidden>Use this delay</button>
+</section>
+
+<section>
+  <h2>3. Mic test</h2>
+  <p>Plays 3 chirps through your speaker and listens with the laptop mic. Set the volume to normal and
+  keep the room quiet for about 5 seconds.</p>
+  <button id="micStart">Start mic test</button>
+  <div class="result" id="micOut"></div>
+  <button id="micUse" hidden>Use this delay</button>
+  <p><label>Mic offset <input type="number" id="offset" step="1"> ms</label>
+  <button id="match" hidden>Set offset so the mic result matches the current delay</button></p>
+  <p style="opacity:.7;font-size:13px">The mic adds its own small delay. Once you've tuned a delay by ear (or
+  with taps), run the mic test and click the button above. After that, mic results line up with what you hear.</p>
+</section>
+
+<script src="measure.js"></script>
+<script src="calibrate.js"></script>

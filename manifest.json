@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "BT AV Sync",
+  "version": "0.4.0",
+  "description": "Delays video to match Bluetooth audio lag.",
+  "permissions": [
+    "storage",
+    "offscreen"
+  ],
+  "host_permissions": [
+    "*://*.crunchyroll.com/*",
+    "*://*.youtube.com/*"
+  ],
+  "background": {
+    "service_worker": "sw.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "BT AV Sync"
+  },
+  "options_page": "calibrate.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "exclude_matches": [
+        "*://*.crunchyroll.com/*",
+        "*://*.youtube.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "*://*.crunchyroll.com/*",
+        "*://*.youtube.com/*"
+      ],
+      "js": [
+        "content.js",
+        "pair.js"
+      ],
+      "all_frames": true
+    }
+  ]
+}
