@@ -11,6 +11,7 @@ class FakeVideo extends EventTarget {
     super();
     this.base = t; this.t0 = 0; this.paused = true; this.rate = 1;
     this.rs = 4; this.seeking = false; this.ended = false;
+    this.volume = 1; this.muted = false;
     this.isConnected = true; this.offsetWidth = 640; this.offsetHeight = 360;
   }
   fire(type) { setTimeout(() => this.dispatchEvent(new Event(type)), 0); } // media events are async
@@ -40,7 +41,7 @@ const ctx = vm.createContext({
     sendMessage: async msg => {
       log.push(msg.msg?.type ?? msg.type);
       if (msg.type === 'pair-wait-sound') return true;
-      if (msg.type === 'measure-now') { await sleep(300); return 280; }
+      if (msg.type === 'measure-now') { await sleep(700); return 280; }
       if (msg.type === 'pair-fail') { ended = msg.text; return; }
       if (msg.type === 'to-sound') return new Promise(r => { if (!tabListener(msg.msg, {}, r)) r(undefined); });
       return null;
@@ -117,6 +118,23 @@ const near = (what, want, tol = 0.03) => assert(Math.abs(lag() - want) < tol, `$
   watchV.play();
   await sleep(1200);
   near('play after paused measure', 0.28);
+
+  watchV.volume = 0.4; // watch tab's volume/mute is the remote for the sound tab
+  watchV.dispatchEvent(new Event('volumechange'));
+  await sleep(50);
+  assert.strictEqual(soundV.volume, 0.4, 'volume copied to sound');
+  watchV.muted = true;
+  watchV.dispatchEvent(new Event('volumechange'));
+  await sleep(50);
+  assert.strictEqual(soundV.muted, true, 'mute copied to sound');
+  watchV.muted = false;
+  watchV.dispatchEvent(new Event('volumechange'));
+  await sleep(50);
+  assert.strictEqual(soundV.muted, false, 'unmute copied to sound');
+  soundV.volume = 1; // the site resets it; the next restart puts it back
+  watchV.currentTime = 60;
+  await sleep(1500);
+  assert.strictEqual(soundV.volume, 0.4, 'volume re-applied on restart');
 
   assert.strictEqual(ended, null, `no failure (${ended})`);
   console.log('ok', 'lag', lag().toFixed(3), 'last readout:', osd[osd.length - 1]);

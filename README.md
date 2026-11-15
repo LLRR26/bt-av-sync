@@ -27,6 +27,7 @@ Default delay is 200 ms. Muted videos and DRM videos (Crunchyroll, Netflix) are 
 DRM blocks frame-delay on Crunchyroll, so `Alt+T` on an episode opens the same episode in a
 pinned tab that plays the sound, mutes your tab, and keeps your tab `delay` ms behind it.
 Pause/seek in your tab are copied over, and the next episode/video is followed automatically.
+The volume and mute controls in your tab control the sound tab's volume.
 `Alt+T` again (or closing either tab, or leaving the video page) ends it.
 Needs 2 free streams on Crunchyroll (Mega Fan or higher). The pinned tab flashes to the front
 once while it loads, because Chrome won't start video in a tab that has never been shown.

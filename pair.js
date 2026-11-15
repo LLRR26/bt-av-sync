@@ -78,6 +78,10 @@ async function soundCmd(msg) {
       v.pause();
       if (Math.abs(v.currentTime - msg.t) > 0.02) v.currentTime = msg.t;
       return ready(v);
+    case 's-volume':
+      v.volume = msg.volume;
+      v.muted = msg.muted;
+      return true;
     case 's-play':
       sound.allow = true;
       await v.play();
@@ -108,6 +112,10 @@ function makeController(p) {
   let want = 'waiting', gen = 0, ownSeek = null, loop = 0, busy = false, restarts = [];
   p.paired = true;
 
+  // This tab is tab-muted, so its player volume/mute acts as the remote for the sound tab.
+  const sendVolume = () => toSound({ type: 's-volume', volume: v.volume, muted: v.muted });
+  on('volumechange', sendVolume);
+
   const fail = text => { c.stop(); send({ type: 'pair-fail', text }); };
 
   // Freeze both tabs, park both at x, start the sound, then start the picture
@@ -126,6 +134,7 @@ function makeController(p) {
     if (sOk === 'ad') return enterAd(true);
     if (sOk !== true) return fail('Two-tab sync off: the sound tab stopped loading');
     if (!wOk) return fail('Two-tab sync off: this tab stopped loading');
+    sendVolume();
     const r = await toSound({ type: 's-play' });
     if (g !== gen) return;
     if (r !== true) return fail('Two-tab sync off: Chrome blocked the sound tab from playing');
