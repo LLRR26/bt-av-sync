@@ -12,7 +12,7 @@ const send = msg => {
   try { return chrome.runtime.sendMessage(msg).catch(() => null); } catch { return Promise.resolve(null); }
 };
 const toSound = msg => send({ type: 'to-sound', msg });
-const clock = () => performance.timeOrigin + performance.now(); // comparable across tabs
+const clock = () => Date.now(); // system clock: the same in every tab (performance.timeOrigin drifts per tab)
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 // YouTube marks its player while an ad plays; never true on Crunchyroll.
 const adShowing = v => !!v.closest?.('.ad-showing');
@@ -210,7 +210,8 @@ function makeController(p) {
     if (s.paused) return restart('the site keeps pausing the sound tab', 'resyncing…');
     if (s.stalled) return restart('the sound tab keeps buffering', 'sound loading…');
     const err = s.t + ((clock() - s.at) / 1000) * s.rate - delayMs / 1000 - v.currentTime; // > 0: picture behind
-    if (Math.abs(err) > 1) return restart('the site keeps resetting the video speed', 'resyncing…');
+    if (document.hidden) { v.playbackRate = s.rate; return; } // background timers are throttled; steering on them overshoots
+    if (Math.abs(err) > 1) return restart(`the picture keeps drifting from the sound (${err.toFixed(1)} s off)`, 'resyncing…');
     v.playbackRate = s.rate * (Math.abs(err) < 0.02 ? 1 : 1 + Math.max(-0.1, Math.min(0.1, err)));
     if (readout) p.osd(`err ${err >= 0 ? '+' : ''}${Math.round(err * 1000)} ms · rate ${v.playbackRate.toFixed(3)} · restarts ${restarts.length}`, 1000);
   }

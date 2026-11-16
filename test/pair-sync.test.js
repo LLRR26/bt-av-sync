@@ -33,8 +33,9 @@ class FakeVideo extends EventTarget {
 const soundV = new FakeVideo(10), watchV = new FakeVideo(10);
 const log = [];
 let tabListener, ended = null;
+const doc = { hidden: false };
 const ctx = vm.createContext({
-  players: new Set(), delayMs: 300, readout: true, needMeasure: false, orphaned: () => false, performance, console, Date,
+  players: new Set(), delayMs: 300, readout: true, needMeasure: false, orphaned: () => false, document: doc, console, Date,
   setTimeout, clearTimeout, setInterval, clearInterval, AbortController, Promise,
   chrome: { runtime: {
     onMessage: { addListener: f => (tabListener = f) },
@@ -135,6 +136,17 @@ const near = (what, want, tol = 0.03) => assert(Math.abs(lag() - want) < tol, `$
   watchV.currentTime = 60;
   await sleep(1500);
   assert.strictEqual(soundV.volume, 0.4, 'volume re-applied on restart');
+
+  doc.hidden = true; // hidden watch tab: throttled timers, so no steering and no restart
+  const hp = log.filter(t => t === 's-prepare').length;
+  watchV.shift(1.5);
+  await sleep(1000);
+  assert.strictEqual(log.filter(t => t === 's-prepare').length, hp, 'no restart while hidden');
+  assert.strictEqual(watchV.rate, 1, 'no nudging while hidden');
+  doc.hidden = false;
+  await sleep(1500);
+  assert(log.filter(t => t === 's-prepare').length > hp, 'resynced once visible');
+  near('after hidden', ctx.delayMs / 1000);
 
   assert.strictEqual(ended, null, `no failure (${ended})`);
   console.log('ok', 'lag', lag().toFixed(3), 'last readout:', osd[osd.length - 1]);
